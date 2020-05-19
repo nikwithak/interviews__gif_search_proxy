@@ -15,24 +15,28 @@ public class HideMeServer {
     final private int port;
     final private String destination;
 
-    public HideMeServer(final String destination, final int port, final int maxConnections) throws IOException {
+    public HideMeServer(final String destination, final int port, final int maxConnections) {
         this.destination = destination;
         this.port = port;
         threads = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConnections);
     }
 
-    public void start() throws Exception {
+    public void start() {
         log.info("Starting HideMe service");
         try (ServerSocket server = new ServerSocket(this.port)) {
-            log.info("Listening on port %d\n", this.port);
+            log.info("Listening on port {}", this.port);
             while (server.isBound()) {
                 final Socket client = server.accept();
+                log.debug("New client connected.");
                 threads.execute(
-                    new ClientConnectionBridge(
-                        client,
-                        InetAddress.getByName("api.giphy.com")
-                ));
+                        new ClientConnectionBridge(
+                                client,
+                                InetAddress.getByName(destination)
+                        ));
             }
+            threads.shutdown();
+        } catch (IOException e) {
+            log.error("A fatal error has occurred", e);
         }
     }
 }

@@ -12,22 +12,24 @@ import java.net.Socket;
 @Slf4j
 public class ClientConnectionBridge implements Runnable {
     private Socket client;
-    private Socket dest;
+    private InetAddress destination;
+    private int destinationPort;
 
     private Thread clientToDest;
     private Thread destToClient;
 
-    public ClientConnectionBridge(Socket client, InetAddress dest) throws IOException {
+    public ClientConnectionBridge(Socket client, InetAddress dest) {
         this(client, dest, 443);
     }
 
-    public ClientConnectionBridge(Socket client, InetAddress dest, int port) throws IOException {
+    public ClientConnectionBridge(Socket client, InetAddress dest, int port) {
         this.client = client;
-        this.dest = new Socket(dest, port);
+        this.destination = dest;
+        this.destinationPort = port;
     }
 
     public void run() {
-        try (Socket client = this.client; Socket dest = this.dest) {
+        try (Socket client = this.client; Socket dest = new Socket(destination, destinationPort)) {
             (clientToDest = new Thread(new IOStreamCoupler(
                     new BufferedInputStream(client.getInputStream()),
                     new BufferedOutputStream(dest.getOutputStream())
@@ -40,7 +42,8 @@ public class ClientConnectionBridge implements Runnable {
             clientToDest.join();
             destToClient.join();
         } catch (IOException | InterruptedException e) {
-            log.error("An error occurred while bridging connection to the client", e);
+            log.error("An exception ({}) occurred while bridging a connection in ClientConnectionBridge.",
+                    e.getClass().getName());
         }
     }
 }
