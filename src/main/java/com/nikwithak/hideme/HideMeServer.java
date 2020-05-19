@@ -11,18 +11,19 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 public class HideMeServer {
-    final private ThreadPoolExecutor threads;
+    final private int maxConnections;
     final private int port;
     final private String destination;
 
     public HideMeServer(final String destination, final int port, final int maxConnections) {
         this.destination = destination;
         this.port = port;
-        threads = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConnections);
+        this.maxConnections = maxConnections;
     }
 
     public void start() {
         log.info("Starting HideMe service");
+        ThreadPoolExecutor threads = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConnections);
         try (ServerSocket server = new ServerSocket(this.port)) {
             log.info("Listening on port {}", this.port);
             while (server.isBound()) {
@@ -34,9 +35,12 @@ public class HideMeServer {
                                 InetAddress.getByName(destination)
                         ));
             }
-            threads.shutdown();
         } catch (IOException e) {
             log.error("A fatal error has occurred", e);
+        } finally {
+            log.info("Closing connections...");
+            threads.shutdown();
         }
+        log.info("Service is shutting down");
     }
 }
