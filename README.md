@@ -9,7 +9,7 @@ The connection remains encrypted via TLS between the client and Giphy, ensuring 
 To start the HideMe Proxy Server, navigate to the root directory, modify `config` (optional), and start the service using Gradle.
 
 ```
-$ gradle run
+$ ./gradlew run
 ```
 
 ##### Configuration
